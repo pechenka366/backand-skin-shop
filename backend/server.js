@@ -7,13 +7,17 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+app.use(cors({
+    origin: ['http://bahtarma.ru', 'https://bahtarma.ru', 'http://www.bahtarma.ru', 'https://www.bahtarma.ru'],
+    credentials: true
+}));
+
 app.use(express.json());
 
-const MONGO_URI = process.env.MONGO_URI;
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://alexayax366_db_user:P3rffuqn.366957@skinshop.esfe896.mongodb.net/shop';
 
-mongoose
-  .connect(MONGO_URI)
+mongoose.connect(MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB error:", err));
 
@@ -32,7 +36,7 @@ const userSchema = new mongoose.Schema({
 });
 
 const cartItemSchema = new mongoose.Schema({
-  userId: { type: String, required: true },  
+  userId: { type: String, required: true },
   productId: { type: String, required: true },
   name: { type: String, required: true },
   title: { type: String, required: true },
@@ -85,9 +89,9 @@ app.post("/api/cart", async (req, res) => {
 
 app.delete("/api/cart/:userId/:productId", async (req, res) => {
   try {
-    await CartItem.deleteOne({ 
-      userId: req.params.userId, 
-      productId: req.params.productId 
+    await CartItem.deleteOne({
+      userId: req.params.userId,
+      productId: req.params.productId
     });
     res.json({ message: "Товар удалён" });
   } catch (err) {
@@ -105,13 +109,10 @@ app.post("/api/register", async (req, res) => {
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res
-        .status(400)
-        .json({ message: "Пользователь с таким email уже существует" });
+      return res.status(400).json({ message: "Пользователь с таким email уже существует" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const user = new User({ name, email, password: hashedPassword });
     await user.save();
 
